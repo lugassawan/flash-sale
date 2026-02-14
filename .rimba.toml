@@ -1,0 +1,5 @@
+[worktree]
+worktree_dir = "../flash-sale-worktrees"
+
+[hooks]
+post_create = "pnpm install --frozen-lockfile"

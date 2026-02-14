@@ -45,6 +45,3 @@ Thumbs.db
 .temp/
 .tmp/
 /tmp
-
-# Rimba config (local to each repo)
-.rimba.toml
