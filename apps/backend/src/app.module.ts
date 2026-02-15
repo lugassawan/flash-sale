@@ -6,10 +6,10 @@ import { BullmqModule } from './infrastructure/messaging/bullmq/bullmq.module';
 import { ProductModule } from './product.module';
 import { SaleModule } from './sale.module';
 import { PurchaseModule } from './purchase.module';
+import { EventsModule } from './events.module';
 import { HealthController } from './presentation/http/rest/controllers/health.controller';
 import { CorrelationIdMiddleware } from './presentation/http/rest/middleware/correlation-id.middleware';
 import { UserIdMiddleware } from './presentation/http/rest/middleware/user-id.middleware';
-import { ReconciliationService } from './infrastructure/scheduling/reconciliation.service';
 
 @Module({
   imports: [
@@ -20,9 +20,9 @@ import { ReconciliationService } from './infrastructure/scheduling/reconciliatio
     ProductModule,
     SaleModule,
     PurchaseModule,
+    EventsModule,
   ],
   controllers: [HealthController],
-  providers: [ReconciliationService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
