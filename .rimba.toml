@@ -1,3 +1,9 @@
 worktree_dir = '../flash-sale-worktrees'
 default_source = 'main'
 copy_files = ['.env', '.env.local', '.envrc']
+
+[post_create]
+command = "pnpm install --frozen-lockfile"
+
+[deps]
+auto_detect = true
