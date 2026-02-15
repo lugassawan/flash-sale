@@ -47,7 +47,9 @@ ENV NODE_ENV=production
 EXPOSE 3000
 USER nestjs
 
+# Use 127.0.0.1: Alpine's wget resolves "localhost" to IPv6 ::1,
+# but Node/Fastify listens on 0.0.0.0 (IPv4 only).
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
 CMD ["node", "apps/backend/dist/main"]

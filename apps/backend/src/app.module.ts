@@ -28,7 +28,7 @@ import { UserIdMiddleware } from './presentation/http/rest/middleware/user-id.mi
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
-    consumer.apply(UserIdMiddleware).forRoutes('api/*');
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*path');
+    consumer.apply(UserIdMiddleware).forRoutes('api/*path');
   }
 }
