@@ -7,8 +7,10 @@ export class StructuredLogger implements LoggerService {
     this.write('info', message, context);
   }
 
-  error(message: string, trace?: string, context?: string): void {
-    this.write('error', message, context, { trace });
+  error(message: unknown, trace?: string, context?: string): void {
+    const msg = message instanceof Error ? message.message : String(message);
+    const stack = message instanceof Error ? message.stack : trace;
+    this.write('error', msg, context, { trace: stack });
   }
 
   warn(message: string, context?: string): void {
