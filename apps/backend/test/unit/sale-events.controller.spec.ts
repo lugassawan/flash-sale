@@ -9,12 +9,19 @@ import {
   SaleStatus,
 } from '../../src/core/domain/sale/repositories/sale.repository';
 import { SaleState } from '../../src/core/domain/sale/value-objects/sale-state.vo';
+import { MetricsService } from '../../src/infrastructure/observability/metrics.service';
+
+const createMockMetrics = () =>
+  ({
+    sseConnectionsGauge: { inc: jest.fn(), dec: jest.fn() },
+  }) as unknown as MetricsService;
 
 describe('SaleEventsController', () => {
   let controller: SaleEventsController;
   let mockSaleRepo: jest.Mocked<SaleRepository>;
   let mockPubSub: jest.Mocked<Pick<RedisPubSubAdapter, 'getEventStream'>>;
   let eventSubject: Subject<SaleEvent>;
+  let mockMetrics: MetricsService;
 
   const saleStatus: SaleStatus = {
     sku: 'WIDGET-001',
@@ -42,10 +49,12 @@ describe('SaleEventsController', () => {
     };
 
     mockSaleRepo.getSaleStatus.mockResolvedValue(saleStatus);
+    mockMetrics = createMockMetrics();
 
     controller = new SaleEventsController(
       mockPubSub as unknown as RedisPubSubAdapter,
       mockSaleRepo,
+      mockMetrics,
     );
   });
 

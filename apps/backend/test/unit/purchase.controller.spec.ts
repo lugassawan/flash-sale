@@ -3,11 +3,18 @@ import { AttemptPurchaseUseCase } from '../../src/application/use-cases/purchase
 import { GetPurchaseStatusUseCase } from '../../src/application/use-cases/purchase/get-purchase-status.use-case';
 import { NotFoundError } from '../../src/application/errors/application.error';
 import { Purchase } from '../../src/core/domain/purchase/entities/purchase.entity';
+import { MetricsService } from '../../src/infrastructure/observability/metrics.service';
+
+const createMockMetrics = () =>
+  ({
+    purchaseOutcomeTotal: { inc: jest.fn() },
+  }) as unknown as MetricsService;
 
 describe('PurchaseController', () => {
   let controller: PurchaseController;
   let mockAttemptPurchase: jest.Mocked<AttemptPurchaseUseCase>;
   let mockGetPurchaseStatus: jest.Mocked<GetPurchaseStatusUseCase>;
+  let mockMetrics: MetricsService;
 
   beforeEach(() => {
     mockAttemptPurchase = {
@@ -18,7 +25,9 @@ describe('PurchaseController', () => {
       execute: jest.fn(),
     } as unknown as jest.Mocked<GetPurchaseStatusUseCase>;
 
-    controller = new PurchaseController(mockAttemptPurchase, mockGetPurchaseStatus);
+    mockMetrics = createMockMetrics();
+
+    controller = new PurchaseController(mockAttemptPurchase, mockGetPurchaseStatus, mockMetrics);
   });
 
   describe('POST /api/v1/purchases', () => {

@@ -3,6 +3,7 @@ import { Observable, concat, defer, filter, finalize, map } from 'rxjs';
 import { RedisPubSubAdapter, SaleEvent } from '@/infrastructure/messaging/redis-pubsub.adapter';
 import { SALE_REPOSITORY, SaleRepository } from '@/core/domain/sale/repositories/sale.repository';
 import { SKU } from '@/core/domain/sale/value-objects/sku.vo';
+import { MetricsService } from '@/infrastructure/observability/metrics.service';
 
 @Controller('api/v1/sales')
 export class SaleEventsController {
@@ -12,6 +13,7 @@ export class SaleEventsController {
   constructor(
     private readonly pubSub: RedisPubSubAdapter,
     @Inject(SALE_REPOSITORY) private readonly saleRepository: SaleRepository,
+    private readonly metrics: MetricsService,
   ) {}
 
   get connectionCount(): number {
@@ -34,11 +36,13 @@ export class SaleEventsController {
 
     return defer(() => {
       this.activeConnections++;
+      this.metrics.sseConnectionsGauge.inc();
       this.logger.log(`SSE client connected for SKU ${sku} (active: ${this.activeConnections})`);
       return concat(initial$, live$);
     }).pipe(
       finalize(() => {
         this.activeConnections--;
+        this.metrics.sseConnectionsGauge.dec();
         this.logger.log(
           `SSE client disconnected for SKU ${sku} (active: ${this.activeConnections})`,
         );

@@ -3,6 +3,7 @@ import { AppConfigModule } from './infrastructure/config/app-config.module';
 import { RedisModule } from './infrastructure/persistence/redis/redis.module';
 import { PostgresqlModule } from './infrastructure/persistence/postgresql/postgresql.module';
 import { BullmqModule } from './infrastructure/messaging/bullmq/bullmq.module';
+import { CrossCuttingModule } from './infrastructure/cross-cutting.module';
 import { ProductModule } from './product.module';
 import { SaleModule } from './sale.module';
 import { PurchaseModule } from './purchase.module';
@@ -17,6 +18,7 @@ import { UserIdMiddleware } from './presentation/http/rest/middleware/user-id.mi
     RedisModule,
     PostgresqlModule,
     BullmqModule,
+    CrossCuttingModule,
     ProductModule,
     SaleModule,
     PurchaseModule,
