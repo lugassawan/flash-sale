@@ -99,7 +99,7 @@ jobs:
 
       # run-stress.sh auto-detects k6: if not installed locally, it falls back
       # to running k6 via Docker (grafana/k6:latest --network host)
-      - name: Run stress tests
+      - name: Run purchase-load stress test
         run: bash apps/backend/test/stress/scripts/run-stress.sh purchase-load
         timeout-minutes: 10
         env:
@@ -108,6 +108,17 @@ jobs:
           INITIAL_STOCK: 100
           VUS: 100
           TEST_SKU: STRESS-LOAD-TEST
+
+      - name: Run duplicate-user stress test
+        run: bash apps/backend/test/stress/scripts/run-stress.sh duplicate-user
+        timeout-minutes: 10
+        env:
+          BASE_URL: http://localhost:3000
+          ADMIN_API_KEY: dev-admin-key-12345678
+          INITIAL_STOCK: 100
+          VUS: 50
+          DEDUP_USERS: 5
+          TEST_SKU: STRESS-DEDUP-TEST
 
       - name: Stop services
         if: always()
