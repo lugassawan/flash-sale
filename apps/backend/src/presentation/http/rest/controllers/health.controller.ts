@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Inject, Optional, Res } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
+import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.tokens';
 
-export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
 export const DATA_SOURCE = Symbol('DATA_SOURCE');
 
 interface RedisClient {
