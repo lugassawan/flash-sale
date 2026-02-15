@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type {
-  SaleStatus,
-  SaleInitialEvent,
-  SaleStockUpdateEvent,
-  SaleStateChangeEvent,
-} from '@/types/sale.types';
+import type { SaleStatus, SaleStockUpdateEvent, SaleStateChangeEvent } from '@/types/sale.types';
 import { SaleState } from '@/types/sale.types';
 import { fetchSaleStatus, DEFAULT_SKU } from '@/services/api';
 
@@ -13,6 +8,12 @@ interface UseSaleEventsReturn {
   connected: boolean;
   jitterReady: boolean;
   endReason?: string;
+}
+
+// NestJS Fastify SSE sends events as: data: {"type":"...", "data":{...}}
+interface SseEnvelope {
+  type: string;
+  data: Record<string, unknown>;
 }
 
 export function useSaleEvents(): UseSaleEventsReturn {
@@ -75,48 +76,40 @@ export function useSaleEvents(): UseSaleEventsReturn {
     const es = new EventSource(`/api/v1/sales/events?sku=${encodeURIComponent(sku)}`);
     eventSourceRef.current = es;
 
-    es.addEventListener('initial', (e: MessageEvent) => {
-      let data: SaleInitialEvent;
+    es.onmessage = (e: MessageEvent) => {
+      let envelope: SseEnvelope;
       try {
-        data = JSON.parse(e.data);
+        envelope = JSON.parse(e.data);
       } catch {
         return;
       }
-      setSale((prev: SaleStatus | null) => ({
-        sku: data.sku,
-        state: data.state,
-        stock: data.stock,
-        initialStock: prev?.initialStock ?? data.stock,
-        productName: prev?.productName ?? '',
-        startTime: data.startTime,
-        endTime: data.endTime,
-      }));
-      applyJitter(data.state);
-      setConnected(true);
-      stopPolling();
-    });
 
-    es.addEventListener('stock-update', (e: MessageEvent) => {
-      let data: SaleStockUpdateEvent;
-      try {
-        data = JSON.parse(e.data);
-      } catch {
-        return;
-      }
-      setSale((prev: SaleStatus | null) => (prev ? { ...prev, stock: data.stock } : prev));
-    });
+      const { type, data } = envelope;
 
-    es.addEventListener('state-change', (e: MessageEvent) => {
-      let data: SaleStateChangeEvent;
-      try {
-        data = JSON.parse(e.data);
-      } catch {
-        return;
+      if (type === 'initial') {
+        const d = data as unknown as SaleStatus;
+        setSale((prev: SaleStatus | null) => ({
+          sku: d.sku,
+          state: d.state,
+          stock: d.stock,
+          initialStock: d.initialStock ?? prev?.initialStock ?? d.stock,
+          productName: d.productName ?? prev?.productName ?? '',
+          startTime: d.startTime,
+          endTime: d.endTime,
+        }));
+        applyJitter(d.state);
+        setConnected(true);
+        stopPolling();
+      } else if (type === 'stock-update') {
+        const d = data as unknown as SaleStockUpdateEvent;
+        setSale((prev: SaleStatus | null) => (prev ? { ...prev, stock: d.stock } : prev));
+      } else if (type === 'state-change') {
+        const d = data as unknown as SaleStateChangeEvent;
+        setSale((prev: SaleStatus | null) => (prev ? { ...prev, state: d.state } : prev));
+        if (d.reason) setEndReason(d.reason);
+        applyJitter(d.state);
       }
-      setSale((prev: SaleStatus | null) => (prev ? { ...prev, state: data.state } : prev));
-      if (data.reason) setEndReason(data.reason);
-      applyJitter(data.state);
-    });
+    };
 
     es.onerror = () => {
       setConnected(false);

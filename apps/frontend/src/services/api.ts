@@ -30,7 +30,7 @@ export async function attemptPurchase(
       'Content-Type': 'application/json',
       'X-User-Id': userId,
     },
-    body: JSON.stringify({ sku, qty: 1 }),
+    body: JSON.stringify({ sku }),
   });
   return parseResponse(res);
 }

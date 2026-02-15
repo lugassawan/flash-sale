@@ -10,8 +10,14 @@ interface TimeLeft {
   seconds: number;
 }
 
+function parseTime(value: string): number {
+  const num = Number(value);
+  if (!Number.isNaN(num) && num > 1e12) return num; // millisecond timestamp
+  return new Date(value).getTime();
+}
+
 function calculateTimeLeft(startTime: string): TimeLeft | null {
-  const diff = new Date(startTime).getTime() - Date.now();
+  const diff = parseTime(startTime) - Date.now();
   if (diff <= 0) return null;
 
   return {
