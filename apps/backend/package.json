@@ -7,12 +7,15 @@
     "dev": "echo 'Backend dev server - configured in PR3'",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "test": "echo 'Tests configured in later PRs'"
+    "test": "jest"
   },
   "dependencies": {
     "@flash-sale/shared": "workspace:*"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.7.3"
   }
 }
