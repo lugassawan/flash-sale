@@ -199,7 +199,7 @@ Pre-commit hooks automatically run ESLint and Prettier on staged files via Husky
 
 ### 1.10 Worktree Development with Rimba
 
-For parallel development on multiple PRs, the project supports [rimba](https://github.com/lugassawan/rimba) for Git worktree management. See the [PR Roadmap](../tmp/tasks.md#3-worktree-workflow-rimba) for the worktree workflow.
+For parallel development on multiple PRs, the project supports [rimba](https://github.com/lugassawan/rimba) for Git worktree management.
 
 ```bash
 # Create a worktree for a feature branch
