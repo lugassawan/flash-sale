@@ -23,6 +23,10 @@ export const envSchema = z.object({
 
   // Observability
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+
+  // Scheduling
+  CRON_STATE_INTERVAL_MS: z.coerce.number().int().positive().default(100),
+  CRON_RECONCILIATION_SCHEDULE: z.string().default('*/5 * * * *'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
