@@ -127,6 +127,17 @@ describe('Sale Entity', () => {
       expect(sale.domainEvents[0].constructor.name).toBe('SaleEndedEvent');
     });
 
+    it('should emit SaleEndedEvent with SOLD_OUT reason via transitionTo when stock is zero', () => {
+      const sale = createSale({ initialStock: 0 });
+      sale.transitionTo(SaleState.ACTIVE, now);
+      sale.clearEvents();
+      sale.transitionTo(SaleState.ENDED, now);
+      expect(sale.domainEvents).toHaveLength(1);
+      const event = sale.domainEvents[0] as any;
+      expect(event.constructor.name).toBe('SaleEndedEvent');
+      expect(event.reason).toBe('SOLD_OUT');
+    });
+
     it('should not allow transitions out of ENDED', () => {
       const sale = createSale();
       sale.transitionTo(SaleState.ACTIVE, now);
@@ -177,6 +188,15 @@ describe('Sale Entity', () => {
       expect(events).toContain('PurchaseConfirmedEvent');
       expect(events).toContain('SaleEndedEvent');
       expect(events).toContain('StockDepletedEvent');
+    });
+
+    it('should emit events in correct order when stock depletes via attemptPurchase', () => {
+      const sale = createSale({ initialStock: 1 });
+      sale.transitionTo(SaleState.ACTIVE, now);
+      sale.clearEvents();
+      sale.attemptPurchase(UserId.create('alice@test.com'));
+      const names = sale.domainEvents.map((e) => e.constructor.name);
+      expect(names).toEqual(['PurchaseConfirmedEvent', 'SaleEndedEvent', 'StockDepletedEvent']);
     });
 
     it('should throw SaleNotActiveError when UPCOMING', () => {

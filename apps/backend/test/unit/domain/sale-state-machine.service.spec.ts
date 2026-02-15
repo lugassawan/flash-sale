@@ -87,6 +87,16 @@ describe('SaleStateMachine Service', () => {
         false,
       );
     });
+
+    it('should allow ACTIVE → ENDED when BOTH time expired AND stock zero', () => {
+      expect(
+        SaleStateMachine.canTransition(
+          SaleState.ACTIVE,
+          SaleState.ENDED,
+          ctx({ now: end, stock: Stock.create(0) }),
+        ),
+      ).toBe(true);
+    });
   });
 
   describe('getNextState', () => {
@@ -123,6 +133,12 @@ describe('SaleStateMachine Service', () => {
 
     it('should return null for ENDED (terminal state)', () => {
       expect(SaleStateMachine.getNextState(SaleState.ENDED, ctx())).toBeNull();
+    });
+
+    it('should return ENDED via getNextState when both time expired and stock zero', () => {
+      expect(
+        SaleStateMachine.getNextState(SaleState.ACTIVE, ctx({ now: end, stock: Stock.create(0) })),
+      ).toBe(SaleState.ENDED);
     });
   });
 });
