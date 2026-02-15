@@ -1,5 +1,9 @@
-[worktree]
-worktree_dir = "../flash-sale-worktrees"
+worktree_dir = '../flash-sale-worktrees'
+default_source = 'main'
+copy_files = ['.env', '.env.local', '.envrc']
 
-[hooks]
-post_create = "pnpm install --frozen-lockfile"
+[post_create]
+command = "pnpm install --frozen-lockfile"
+
+[deps]
+auto_detect = true
