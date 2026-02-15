@@ -15,11 +15,7 @@ async function bootstrap(): Promise<void> {
   const host = config.get<string>('HOST', '0.0.0.0');
 
   app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ResponseWrapperInterceptor());
