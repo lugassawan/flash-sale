@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nest
 import { ConfigService } from '@nestjs/config';
 import { CronJob } from 'cron';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.module';
+import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.tokens';
 import { ReconciliationService } from '@/infrastructure/scheduling/reconciliation.service';
 import { SALE_REPOSITORY, SaleRepository } from '@/core/domain/sale/repositories/sale.repository';
 import { SaleState } from '@/core/domain/sale/value-objects/sale-state.vo';

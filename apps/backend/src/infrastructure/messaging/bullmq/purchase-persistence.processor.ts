@@ -8,7 +8,7 @@ import {
 import { Purchase } from '@/core/domain/purchase/entities/purchase.entity';
 import { PurchaseJobData } from '@/application/ports/purchase-persistence.port';
 import { CircuitBreaker } from '../../persistence/postgresql/circuit-breaker';
-import { PURCHASE_QUEUE } from './bullmq.module';
+import { PURCHASE_QUEUE } from './bullmq.tokens';
 
 @Processor(PURCHASE_QUEUE)
 export class PurchasePersistenceProcessor extends WorkerHost {

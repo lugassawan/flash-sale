@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
 import { Observable, Subject } from 'rxjs';
-import { REDIS_CLIENT } from '../persistence/redis/redis.module';
+import { REDIS_CLIENT } from '../persistence/redis/redis.tokens';
 
 export interface SaleEvent {
   event: 'stock-update' | 'state-change' | 'initial';

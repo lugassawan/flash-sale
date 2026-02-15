@@ -4,8 +4,9 @@ import Redis from 'ioredis';
 import { RedisSaleRepository } from './repositories/redis-sale.repository';
 import { RedisPubSubAdapter } from '../../messaging/redis-pubsub.adapter';
 import { SALE_REPOSITORY } from '@/core/domain/sale/repositories/sale.repository';
+import { REDIS_CLIENT } from './redis.tokens';
 
-export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+export { REDIS_CLIENT } from './redis.tokens';
 
 @Global()
 @Module({

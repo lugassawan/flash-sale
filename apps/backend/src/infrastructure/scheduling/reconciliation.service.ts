@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.module';
+import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.tokens';
 import { PurchaseOrmEntity } from '@/infrastructure/persistence/postgresql/entities/purchase.orm-entity';
 import { ProductOrmEntity } from '@/infrastructure/persistence/postgresql/entities/product.orm-entity';
 import {
