@@ -39,9 +39,10 @@ export const options = {
     },
   },
   thresholds: {
-    http_req_duration: ['p(50)<1000', 'p(95)<2000', 'p(99)<3000'],
+    http_req_duration: ['p(50)<500', 'p(95)<1000', 'p(99)<2000'],
     http_req_failed: ['rate<0.001'],
     purchase_success: [`count==${INITIAL_STOCK}`],
+    purchase_rejected_already_purchased: ['count==0'],
     purchase_error: ['count==0'],
     http_errors: ['count==0'],
   },
