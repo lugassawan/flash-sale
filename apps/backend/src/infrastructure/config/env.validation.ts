@@ -27,8 +27,8 @@ export const envSchema = z.object({
 
 export type EnvConfig = z.infer<typeof envSchema>;
 
-export function validateEnv(): EnvConfig {
-  const result = envSchema.safeParse(process.env);
+export function validateEnv(env: Record<string, unknown> = process.env): EnvConfig {
+  const result = envSchema.safeParse(env);
   if (!result.success) {
     const formatted = result.error.issues
       .map((i) => `  ${i.path.join('.')}: ${i.message}`)

@@ -68,4 +68,12 @@ describe('ResponseWrapperInterceptor', () => {
       done();
     });
   });
+
+  it('should wrap objects that have success field but not envelope shape', (done) => {
+    const domainObject = { success: true, count: 5 };
+    callWith(domainObject).subscribe((result) => {
+      expect(result).toEqual({ success: true, data: { success: true, count: 5 } });
+      done();
+    });
+  });
 });

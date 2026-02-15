@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FastifyRequest } from 'fastify';
+import { timingSafeEqual } from 'crypto';
 
 @Injectable()
 export class AdminKeyGuard implements CanActivate {
@@ -11,7 +12,7 @@ export class AdminKeyGuard implements CanActivate {
     const adminKey = request.headers['x-admin-key'] as string | undefined;
     const expected = this.config.get<string>('ADMIN_API_KEY');
 
-    if (!adminKey || adminKey !== expected) {
+    if (!adminKey || !expected || !this.safeCompare(adminKey, expected)) {
       throw new UnauthorizedException({
         success: false,
         error: {
@@ -21,5 +22,12 @@ export class AdminKeyGuard implements CanActivate {
       });
     }
     return true;
+  }
+
+  private safeCompare(a: string, b: string): boolean {
+    const aBuf = Buffer.from(a);
+    const bBuf = Buffer.from(b);
+    if (aBuf.length !== bBuf.length) return false;
+    return timingSafeEqual(aBuf, bBuf);
   }
 }

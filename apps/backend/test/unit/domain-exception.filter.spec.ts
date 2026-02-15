@@ -86,7 +86,7 @@ describe('GlobalExceptionFilter', () => {
     expect(body.error.code).toBe('SERVICE_UNAVAILABLE');
   });
 
-  it('should pass through NestJS HttpExceptions', () => {
+  it('should pass through HttpExceptions with standard envelope', () => {
     const error = new HttpException(
       { success: false, error: { code: 'UNAUTHORIZED', message: 'No auth' } },
       HttpStatus.UNAUTHORIZED,
@@ -98,6 +98,21 @@ describe('GlobalExceptionFilter', () => {
       success: false,
       error: { code: 'UNAUTHORIZED', message: 'No auth' },
     });
+  });
+
+  it('should normalize HttpExceptions without standard envelope', () => {
+    const error = new HttpException(
+      { message: ['name must be a string', 'age must be positive'], statusCode: 400 },
+      HttpStatus.BAD_REQUEST,
+    );
+    filter.catch(error, mockHost);
+
+    expect(mockReply.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+    const body = mockReply.send.mock.calls[0][0];
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('HTTP_ERROR');
+    // Should not leak the raw array — falls back to exception.message
+    expect(typeof body.error.message).toBe('string');
   });
 
   it('should map unexpected errors to 500 without leaking internals', () => {

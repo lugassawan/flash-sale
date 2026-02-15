@@ -12,8 +12,13 @@ export class ResponseWrapperInterceptor implements NestInterceptor {
           return data;
         }
 
-        // Don't re-wrap responses that already have success field
-        if (typeof data === 'object' && 'success' in data) {
+        // Don't re-wrap responses already in the standard envelope shape
+        if (
+          typeof data === 'object' &&
+          'success' in data &&
+          typeof data.success === 'boolean' &&
+          ('data' in data || 'error' in data)
+        ) {
           return data;
         }
 

@@ -73,14 +73,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const response = exception.getResponse();
-      const body =
-        typeof response === 'object' && response !== null
-          ? response
-          : {
-              success: false,
-              error: { code: 'HTTP_ERROR', message: exception.message },
-            };
-      reply.status(status).send(body);
+
+      // Pass through responses already in our standard envelope format
+      if (typeof response === 'object' && response !== null && 'success' in response) {
+        reply.status(status).send(response);
+        return;
+      }
+
+      // Normalize other responses to prevent leaking internal structure
+      const message =
+        typeof response === 'string' ? response : ((response as any)?.message ?? exception.message);
+      reply.status(status).send({
+        success: false,
+        error: {
+          code: 'HTTP_ERROR',
+          message: typeof message === 'string' ? message : exception.message,
+        },
+      } satisfies ErrorResponseBody);
       return;
     }
 

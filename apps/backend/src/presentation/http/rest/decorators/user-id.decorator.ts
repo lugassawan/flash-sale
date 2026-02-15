@@ -1,7 +1,7 @@
 import { createParamDecorator, ExecutionContext, BadRequestException } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 
-export const UserId = createParamDecorator((_data: unknown, ctx: ExecutionContext): string => {
+export function extractAndValidateUserId(ctx: ExecutionContext): string {
   const request = ctx.switchToHttp().getRequest<FastifyRequest>();
   const userId = request.headers['x-user-id'] as string | undefined;
   const trimmed = userId?.trim();
@@ -31,4 +31,8 @@ export const UserId = createParamDecorator((_data: unknown, ctx: ExecutionContex
     });
   }
   return trimmed;
+}
+
+export const UserId = createParamDecorator((_data: unknown, ctx: ExecutionContext): string => {
+  return extractAndValidateUserId(ctx);
 });
