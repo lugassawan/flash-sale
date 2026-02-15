@@ -3,6 +3,7 @@ import { AppConfigModule } from './infrastructure/config/app-config.module';
 import { RedisModule } from './infrastructure/persistence/redis/redis.module';
 import { PostgresqlModule } from './infrastructure/persistence/postgresql/postgresql.module';
 import { BullmqModule } from './infrastructure/messaging/bullmq/bullmq.module';
+import { ProductModule } from './product.module';
 import { SaleModule } from './sale.module';
 import { PurchaseModule } from './purchase.module';
 import { HealthController } from './presentation/http/rest/controllers/health.controller';
@@ -16,6 +17,7 @@ import { ReconciliationService } from './infrastructure/scheduling/reconciliatio
     RedisModule,
     PostgresqlModule,
     BullmqModule,
+    ProductModule,
     SaleModule,
     PurchaseModule,
   ],

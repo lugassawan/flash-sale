@@ -4,6 +4,7 @@ import { Sale } from '@/core/domain/sale/entities/sale.entity';
 import { SKU } from '@/core/domain/sale/value-objects/sku.vo';
 import { SaleState } from '@/core/domain/sale/value-objects/sale-state.vo';
 import { ValidationError } from '@/application/errors/application.error';
+import { parseRedisTimestamp } from '@/shared/parse-redis-timestamp';
 
 export interface UpdateSaleCommand {
   sku: string;
@@ -33,8 +34,10 @@ export class UpdateSaleUseCase {
       sku: command.sku,
       productName: command.productName ?? status.productName,
       initialStock: command.initialStock ?? status.initialStock,
-      startTime: command.startTime ? new Date(command.startTime) : new Date(status.startTime),
-      endTime: command.endTime ? new Date(command.endTime) : new Date(status.endTime),
+      startTime: command.startTime
+        ? new Date(command.startTime)
+        : parseRedisTimestamp(status.startTime),
+      endTime: command.endTime ? new Date(command.endTime) : parseRedisTimestamp(status.endTime),
     };
 
     const sale = Sale.create(updatedSale);
