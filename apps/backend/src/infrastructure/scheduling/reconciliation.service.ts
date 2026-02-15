@@ -2,13 +2,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.module';
+import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.tokens';
 import { PurchaseOrmEntity } from '@/infrastructure/persistence/postgresql/entities/purchase.orm-entity';
 import { ProductOrmEntity } from '@/infrastructure/persistence/postgresql/entities/product.orm-entity';
 import {
   PurchasePersistencePort,
   PURCHASE_PERSISTENCE,
 } from '@/application/ports/purchase-persistence.port';
+import { MetricsService } from '@/infrastructure/observability/metrics.service';
 
 @Injectable()
 export class ReconciliationService {
@@ -22,6 +23,7 @@ export class ReconciliationService {
     private readonly productRepo: Repository<ProductOrmEntity>,
     @Inject(PURCHASE_PERSISTENCE)
     private readonly purchasePersistence: PurchasePersistencePort,
+    private readonly metrics: MetricsService,
   ) {}
 
   async reconcile(sku: string): Promise<{ mismatches: number }> {
@@ -53,6 +55,7 @@ export class ReconciliationService {
     }
 
     this.logger.warn(`Reconciliation found ${missingUserIds.length} mismatches for SKU: ${sku}`);
+    this.metrics.reconciliationMismatches.inc(missingUserIds.length);
 
     // Re-enqueue missing purchases. purchasedAt uses reconciliation time since
     // Redis only stores user IDs in the buyers set, not individual purchase timestamps.

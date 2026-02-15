@@ -4,8 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { PurchasePersistenceProducer } from './purchase-persistence.producer';
 import { PurchasePersistenceProcessor } from './purchase-persistence.processor';
 import { PURCHASE_PERSISTENCE } from '@/application/ports/purchase-persistence.port';
+import { PURCHASE_QUEUE } from './bullmq.tokens';
 
-export const PURCHASE_QUEUE = 'purchase-persistence';
+export { PURCHASE_QUEUE } from './bullmq.tokens';
 
 @Global()
 @Module({

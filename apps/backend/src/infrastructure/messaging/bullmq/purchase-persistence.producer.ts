@@ -5,7 +5,7 @@ import {
   PurchasePersistencePort,
   PurchaseJobData,
 } from '@/application/ports/purchase-persistence.port';
-import { PURCHASE_QUEUE } from './bullmq.module';
+import { PURCHASE_QUEUE } from './bullmq.tokens';
 
 @Injectable()
 export class PurchasePersistenceProducer implements PurchasePersistencePort {

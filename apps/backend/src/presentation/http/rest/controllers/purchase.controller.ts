@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { AttemptPurchaseUseCase } from '@/application/use-cases/purchase/attempt-purchase.use-case';
 import { GetPurchaseStatusUseCase } from '@/application/use-cases/purchase/get-purchase-status.use-case';
 import { AttemptPurchaseDto } from '@/application/dto/attempt-purchase.dto';
@@ -6,6 +6,8 @@ import { SkuQueryDto } from '@/application/dto/sku-query.dto';
 import { NotFoundError } from '@/application/errors/application.error';
 import { PurchaseAttemptResult } from '@/core/domain/sale/repositories/sale.repository';
 import { UserId } from '@/presentation/http/rest/decorators/user-id.decorator';
+import { RateLimitGuard } from '@/infrastructure/rate-limiting/rate-limit.guard';
+import { MetricsService } from '@/infrastructure/observability/metrics.service';
 
 type RejectionCode = Extract<PurchaseAttemptResult, { status: 'rejected' }>['code'];
 
@@ -14,20 +16,24 @@ export class PurchaseController {
   constructor(
     private readonly attemptPurchaseUseCase: AttemptPurchaseUseCase,
     private readonly getPurchaseStatusUseCase: GetPurchaseStatusUseCase,
+    private readonly metrics: MetricsService,
   ) {}
 
   @Post()
   @HttpCode(200)
+  @UseGuards(RateLimitGuard)
   async purchase(@UserId() userId: string, @Body() dto: AttemptPurchaseDto) {
     const result = await this.attemptPurchaseUseCase.execute({ userId, sku: dto.sku });
 
     if (result.status === 'rejected') {
+      this.metrics.purchaseOutcomeTotal.inc({ outcome: result.code });
       return {
         success: false,
         error: { code: result.code, message: rejectionMessage(result.code) },
       };
     }
 
+    this.metrics.purchaseOutcomeTotal.inc({ outcome: 'SUCCESS' });
     return { purchaseNo: result.purchaseNo, purchasedAt: result.purchasedAt };
   }
 

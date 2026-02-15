@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.module';
+import { REDIS_CLIENT } from '@/infrastructure/persistence/redis/redis.tokens';
 import { TransitionSaleStateUseCase } from '@/application/use-cases/sale/transition-sale-state.use-case';
 import { SALE_REPOSITORY, SaleRepository } from '@/core/domain/sale/repositories/sale.repository';
 import { SaleState } from '@/core/domain/sale/value-objects/sale-state.vo';

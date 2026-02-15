@@ -12,7 +12,7 @@ import { SaleState } from '@/core/domain/sale/value-objects/sale-state.vo';
 import { UserId } from '@/core/domain/purchase/value-objects/user-id.vo';
 import { Sale } from '@/core/domain/sale/entities/sale.entity';
 import { PurchaseNumber } from '@/core/domain/purchase/value-objects/purchase-number.vo';
-import { REDIS_CLIENT } from '../redis.module';
+import { REDIS_CLIENT } from '../redis.tokens';
 
 @Injectable()
 export class RedisSaleRepository implements SaleRepository, OnModuleInit {
