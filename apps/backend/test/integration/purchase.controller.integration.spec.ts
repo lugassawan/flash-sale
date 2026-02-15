@@ -17,6 +17,7 @@ import { EventPublisher } from '../../src/application/ports/event-publisher.port
 import { PurchasePersistencePort } from '../../src/application/ports/purchase-persistence.port';
 import { Sale } from '../../src/core/domain/sale/entities/sale.entity';
 import { NotFoundError } from '../../src/application/errors/application.error';
+import { MetricsService } from '../../src/infrastructure/observability/metrics.service';
 
 describe('PurchaseController (Integration)', () => {
   let redisClient: Redis;
@@ -54,7 +55,10 @@ describe('PurchaseController (Integration)', () => {
       mockPurchasePersistence,
     );
     const getPurchaseStatus = new GetPurchaseStatusUseCase(purchaseRepo);
-    controller = new PurchaseController(attemptPurchase, getPurchaseStatus);
+    const mockMetrics = {
+      purchaseOutcomeTotal: { inc: jest.fn() },
+    } as unknown as MetricsService;
+    controller = new PurchaseController(attemptPurchase, getPurchaseStatus, mockMetrics);
   }, 120_000);
 
   afterAll(async () => {

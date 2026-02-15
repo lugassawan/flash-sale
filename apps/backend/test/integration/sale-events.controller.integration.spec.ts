@@ -5,6 +5,7 @@ import { RedisPubSubAdapter } from '../../src/infrastructure/messaging/redis-pub
 import { RedisSaleRepository } from '../../src/infrastructure/persistence/redis/repositories/redis-sale.repository';
 import { SaleEventsController } from '../../src/presentation/http/rest/sse/sale-events.controller';
 import { SaleState } from '../../src/core/domain/sale/value-objects/sale-state.vo';
+import { MetricsService } from '../../src/infrastructure/observability/metrics.service';
 
 describe('SaleEventsController (Integration)', () => {
   let client: Redis;
@@ -46,7 +47,10 @@ describe('SaleEventsController (Integration)', () => {
     });
 
     // Create controller with real dependencies (bypass NestJS DI)
-    controller = new SaleEventsController(pubSubAdapter, saleRepo);
+    const mockMetrics = {
+      sseConnectionsGauge: { inc: jest.fn(), dec: jest.fn() },
+    } as unknown as MetricsService;
+    controller = new SaleEventsController(pubSubAdapter, saleRepo, mockMetrics);
   });
 
   afterEach(async () => {

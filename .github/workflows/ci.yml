@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - name: Run linters
+        run: pnpm turbo lint
+      - name: Check formatting
+        run: pnpm format
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm --filter @flash-sale/backend exec jest --testPathPatterns=test/unit --ci
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm --filter @flash-sale/backend exec jest --testPathPatterns=test/integration --ci
+        timeout-minutes: 10
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-node
+
+      - name: Build backend Docker image
+        run: docker compose -f infrastructure/docker/docker-compose.yml build api
+
+      - name: Start services
+        run: docker compose -f infrastructure/docker/docker-compose.yml up -d --wait
+        timeout-minutes: 5
+
+      - name: Verify API is healthy
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/health && exit 0
+            sleep 2
+          done
+          echo "API failed to become healthy" && exit 1
+
+      - name: Install Playwright browsers
+        working-directory: apps/frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: apps/frontend
+        run: pnpm test:e2e
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:5173
+          E2E_API_URL: http://localhost:3000
+          E2E_ADMIN_KEY: dev-admin-key-12345678
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 7
+
+      - name: Stop services
+        if: always()
+        run: docker compose -f infrastructure/docker/docker-compose.yml down -v
+
+  stress-test:
+    name: Stress Tests
+    runs-on: ubuntu-latest
+    needs: [integration-test, e2e-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start services
+        run: docker compose -f infrastructure/docker/docker-compose.yml up -d --build --wait
+        timeout-minutes: 5
+
+      # run-stress.sh auto-detects k6: if not installed locally, it falls back
+      # to running k6 via Docker (grafana/k6:latest --network host)
+      - name: Run stress tests
+        run: bash apps/backend/test/stress/scripts/run-stress.sh purchase-load
+        timeout-minutes: 10
+        env:
+          BASE_URL: http://localhost:3000
+          ADMIN_API_KEY: dev-admin-key-12345678
+          INITIAL_STOCK: 100
+          VUS: 100
+
+      - name: Stop services
+        if: always()
+        run: docker compose -f infrastructure/docker/docker-compose.yml down -v
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test]
+    strategy:
+      matrix:
+        target:
+          - { name: backend, dockerfile: apps/backend/Dockerfile }
+          - { name: frontend, dockerfile: apps/frontend/Dockerfile }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        env:
+          TARGET_NAME: ${{ matrix.target.name }}
+          TARGET_DOCKERFILE: ${{ matrix.target.dockerfile }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          docker build \
+            -f "$TARGET_DOCKERFILE" \
+            -t "flash-sale/$TARGET_NAME:$COMMIT_SHA" \
+            .
