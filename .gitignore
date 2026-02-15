@@ -26,6 +26,10 @@ lerna-debug.log*
 .env.local
 .env.*.local
 
+# Allow infrastructure env files (non-secret dev/test defaults)
+!infrastructure/docker/.env.development
+!infrastructure/docker/.env.test
+
 # Coverage
 coverage/
 .nyc_output/
@@ -45,4 +49,6 @@ Thumbs.db
 .temp/
 .tmp/
 /tmp
+
+# Rimba
 .rimba.toml
