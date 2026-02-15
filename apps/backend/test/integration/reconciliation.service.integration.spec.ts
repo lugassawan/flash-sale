@@ -10,6 +10,7 @@ import { ProductOrmEntity } from '@/infrastructure/persistence/postgresql/entiti
 import { PurchaseOrmEntity } from '@/infrastructure/persistence/postgresql/entities/purchase.orm-entity';
 import { ReconciliationService } from '@/infrastructure/scheduling/reconciliation.service';
 import { PurchaseJobData } from '@/application/ports/purchase-persistence.port';
+import { MetricsService } from '@/infrastructure/observability/metrics.service';
 
 describe('ReconciliationService (Integration)', () => {
   let dataSource: DataSource;
@@ -47,11 +48,15 @@ describe('ReconciliationService (Integration)', () => {
       },
     };
 
+    const mockMetrics = {
+      reconciliationMismatches: { inc: jest.fn() },
+    } as unknown as MetricsService;
     reconciliationService = new ReconciliationService(
       redis,
       purchaseOrmRepo,
       productOrmRepo,
       mockPersistence,
+      mockMetrics,
     );
 
     testProduct = await productOrmRepo.save({
