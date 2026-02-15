@@ -1,0 +1,29 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6380:6379'
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgresql:
+    image: postgres:16-alpine
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: flashsale_test
+      POSTGRES_USER: flashsale
+      POSTGRES_PASSWORD: flashsale
+    volumes:
+      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U flashsale']
+      interval: 5s
+      timeout: 3s
+      retries: 5
