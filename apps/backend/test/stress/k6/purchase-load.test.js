@@ -152,6 +152,7 @@ export function teardown(data) {
   console.log(`[teardown] Final stock: ${result.summary.currentStock}`);
   console.log(`[teardown] Total purchases (DB): ${result.summary.totalPurchases}`);
 
-  // Clean up test sale
-  deleteSale(data.baseUrl, data.adminKey, data.sku);
+  // NOTE: Do not delete sale here — verify-invariants.sh needs Redis + PG data
+  // intact for its independent checks. Cleanup happens at the start of the next
+  // run via setup()'s deleteSale() call.
 }

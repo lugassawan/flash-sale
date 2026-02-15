@@ -52,12 +52,12 @@ pg_cmd() {
     -t -A -c "$1" 2>/dev/null
 }
 
-# Safe PG query using parameterised SKU via psql variables
-pg_cmd_with_sku() {
-  local query="$1"
-  local sku_val="$2"
-  psql -h "${PG_HOST}" -p "${PG_PORT}" -U "${PG_USER}" -d "${PG_DB}" \
-    -t -A -v sku="${sku_val}" -c "${query}" 2>/dev/null
+# Validate SKU format (alphanumeric + hyphens only) to prevent SQL injection
+validate_sku() {
+  if [[ ! "$1" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    warn "Invalid SKU format: $1 — skipping"
+    return 1
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -100,6 +100,12 @@ discover_skus() {
 
 verify_sku() {
   local sku="$1"
+
+  # Validate SKU to prevent SQL injection via direct interpolation
+  if ! validate_sku "${sku}"; then
+    return
+  fi
+
   log ""
   log "═══════════════════════════════════════"
   log "  Verifying SKU: ${sku}"
@@ -132,37 +138,37 @@ verify_sku() {
   local pg_duplicate_users=0
 
   if check_pg; then
-    pg_purchases=$(pg_cmd_with_sku "
+    pg_purchases=$(pg_cmd "
       SELECT COUNT(*)
       FROM purchases p
       JOIN products pr ON p.product_id = pr.id
-      WHERE pr.sku = :'sku'
-    " "${sku}")
+      WHERE pr.sku = '${sku}'
+    ")
 
-    pg_initial_stock=$(pg_cmd_with_sku "
+    pg_initial_stock=$(pg_cmd "
       SELECT initial_stock
       FROM products
-      WHERE sku = :'sku'
-    " "${sku}")
+      WHERE sku = '${sku}'
+    ")
 
-    pg_unique_users=$(pg_cmd_with_sku "
+    pg_unique_users=$(pg_cmd "
       SELECT COUNT(DISTINCT p.user_id)
       FROM purchases p
       JOIN products pr ON p.product_id = pr.id
-      WHERE pr.sku = :'sku'
-    " "${sku}")
+      WHERE pr.sku = '${sku}'
+    ")
 
-    pg_duplicate_users=$(pg_cmd_with_sku "
+    pg_duplicate_users=$(pg_cmd "
       SELECT COUNT(*)
       FROM (
         SELECT p.user_id, COUNT(*) as cnt
         FROM purchases p
         JOIN products pr ON p.product_id = pr.id
-        WHERE pr.sku = :'sku'
+        WHERE pr.sku = '${sku}'
         GROUP BY p.user_id
         HAVING COUNT(*) > 1
       ) dupes
-    " "${sku}")
+    ")
 
     log "  PG total purchases:       ${pg_purchases}"
     log "  PG initial stock:         ${pg_initial_stock}"
