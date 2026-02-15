@@ -8,11 +8,11 @@ The flash sale operates as a state machine with three states.
 
 #### 1.1.1 States
 
-| State | Description |
-|---|---|
-| `upcoming` | Current time is before the configured start time. No purchases allowed. |
-| `active` | Current time is within [start, end) and available stock > 0. Purchases allowed. |
-| `ended` | Current time is at or past the end time, OR available stock has reached 0. No purchases allowed. |
+| State      | Description                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| `upcoming` | Current time is before the configured start time. No purchases allowed.                          |
+| `active`   | Current time is within [start, end) and available stock > 0. Purchases allowed.                  |
+| `ended`    | Current time is at or past the end time, OR available stock has reached 0. No purchases allowed. |
 
 #### 1.1.2 Transitions
 
@@ -34,13 +34,13 @@ upcoming ──[start time reached]──► active ──[end time reached OR s
 
 #### 1.1.4 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
-| FL-1 | Before start time, sale status endpoint returns `upcoming`. |
+| ID   | Criterion                                                                                                 |
+| ---- | --------------------------------------------------------------------------------------------------------- |
+| FL-1 | Before start time, sale status endpoint returns `upcoming`.                                               |
 | FL-2 | At or after start time (with stock remaining and before end time), sale status endpoint returns `active`. |
-| FL-3 | At or after end time, sale status endpoint returns `ended` regardless of remaining stock. |
-| FL-4 | When stock reaches 0 during an active sale, status immediately becomes `ended`. |
-| FL-5 | The `ended` state is irreversible within a single sale configuration. |
+| FL-3 | At or after end time, sale status endpoint returns `ended` regardless of remaining stock.                 |
+| FL-4 | When stock reaches 0 during an active sale, status immediately becomes `ended`.                           |
+| FL-5 | The `ended` state is irreversible within a single sale configuration.                                     |
 
 #### 1.1.5 Edge Cases
 
@@ -73,13 +73,13 @@ upcoming ──[start time reached]──► active ──[end time reached OR s
 
 #### 1.2.4 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
-| IM-1 | Available stock starts at the configured quantity when the sale becomes active. |
-| IM-2 | Each confirmed purchase decrements available stock by exactly 1. |
-| IM-3 | Available stock never goes below 0, even under concurrent load. |
+| ID   | Criterion                                                                            |
+| ---- | ------------------------------------------------------------------------------------ |
+| IM-1 | Available stock starts at the configured quantity when the sale becomes active.      |
+| IM-2 | Each confirmed purchase decrements available stock by exactly 1.                     |
+| IM-3 | Available stock never goes below 0, even under concurrent load.                      |
 | IM-4 | Total confirmed purchases never exceeds the initial stock quantity (no overselling). |
-| IM-5 | When stock reaches 0, all subsequent purchase attempts are rejected. |
+| IM-5 | When stock reaches 0, all subsequent purchase attempts are rejected.                 |
 
 #### 1.2.5 Edge Cases
 
@@ -105,12 +105,12 @@ upcoming ──[start time reached]──► active ──[end time reached OR s
 
 A purchase attempt results in one of the following:
 
-| Outcome | Condition |
-|---|---|
-| **Success** | Sale is active, stock is available, user has not previously purchased. Stock is decremented. |
-| **Rejected: Sale not active** | Sale status is `upcoming` or `ended`. |
-| **Rejected: Sold out** | Sale was active but available stock is 0. |
-| **Rejected: Already purchased** | User has already confirmed a purchase. |
+| Outcome                         | Condition                                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Success**                     | Sale is active, stock is available, user has not previously purchased. Stock is decremented. |
+| **Rejected: Sale not active**   | Sale status is `upcoming` or `ended`.                                                        |
+| **Rejected: Sold out**          | Sale was active but available stock is 0.                                                    |
+| **Rejected: Already purchased** | User has already confirmed a purchase.                                                       |
 
 Each outcome must be clearly distinguishable in the API response.
 
@@ -121,14 +121,14 @@ Each outcome must be clearly distinguishable in the API response.
 
 #### 1.3.5 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
+| ID   | Criterion                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------ |
 | PR-1 | A valid purchase attempt during an active sale with available stock succeeds and returns a success response. |
-| PR-2 | A user who has already purchased receives an "already purchased" rejection on subsequent attempts. |
-| PR-3 | A purchase attempt when the sale is not active returns a "sale not active" rejection. |
-| PR-4 | A purchase attempt when stock is 0 returns a "sold out" rejection. |
-| PR-5 | Under concurrent duplicate attempts from the same user, at most one succeeds. |
-| PR-6 | Concurrent duplicate attempts from the same user decrement stock by at most 1. |
+| PR-2 | A user who has already purchased receives an "already purchased" rejection on subsequent attempts.           |
+| PR-3 | A purchase attempt when the sale is not active returns a "sale not active" rejection.                        |
+| PR-4 | A purchase attempt when stock is 0 returns a "sold out" rejection.                                           |
+| PR-5 | Under concurrent duplicate attempts from the same user, at most one succeeds.                                |
+| PR-6 | Concurrent duplicate attempts from the same user decrement stock by at most 1.                               |
 
 #### 1.3.6 Edge Cases
 
@@ -158,12 +158,12 @@ The frontend is a single-page application that displays the current sale status 
 - Upon submission, the UI must show a loading/pending state and prevent duplicate clicks.
 - The UI must display distinct feedback for each purchase outcome:
 
-| Outcome | User-Facing Feedback |
-|---|---|
-| Success | Clear confirmation that the purchase succeeded. |
-| Sale not active | Message indicating the sale is not currently running. |
-| Sold out | Message indicating all stock has been sold. |
-| Already purchased | Message indicating the user has already purchased. |
+| Outcome           | User-Facing Feedback                                  |
+| ----------------- | ----------------------------------------------------- |
+| Success           | Clear confirmation that the purchase succeeded.       |
+| Sale not active   | Message indicating the sale is not currently running. |
+| Sold out          | Message indicating all stock has been sold.           |
+| Already purchased | Message indicating the user has already purchased.    |
 
 #### 1.4.4 Input Validation
 
@@ -177,15 +177,15 @@ The frontend is a single-page application that displays the current sale status 
 
 #### 1.4.6 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
-| FE-1 | The UI displays the correct sale state (`upcoming`, `active`, `ended`) matching the backend. |
+| ID   | Criterion                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------ |
+| FE-1 | The UI displays the correct sale state (`upcoming`, `active`, `ended`) matching the backend.                 |
 | FE-2 | During `active`, the displayed stock count reflects the current server-side value within a reasonable delay. |
-| FE-3 | The purchase button is disabled when the sale is not `active`. |
-| FE-4 | Each of the four purchase outcomes produces visually distinct feedback to the user. |
-| FE-5 | The UI prevents submission of empty/whitespace-only identifiers before making a server request. |
-| FE-6 | After a successful purchase, subsequent purchase attempts are prevented or clearly rejected in the UI. |
-| FE-7 | Sale status updates are received without manual page refresh. |
+| FE-3 | The purchase button is disabled when the sale is not `active`.                                               |
+| FE-4 | Each of the four purchase outcomes produces visually distinct feedback to the user.                          |
+| FE-5 | The UI prevents submission of empty/whitespace-only identifiers before making a server request.              |
+| FE-6 | After a successful purchase, subsequent purchase attempts are prevented or clearly rejected in the UI.       |
+| FE-7 | Sale status updates are received without manual page refresh.                                                |
 
 ---
 
@@ -206,13 +206,14 @@ The frontend is a single-page application that displays the current sale status 
 
 #### 2.1.3 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
-| NF-1 | System handles at least 1,000 concurrent purchase attempts without errors, data loss, or overselling. |
+| ID   | Criterion                                                                                               |
+| ---- | ------------------------------------------------------------------------------------------------------- |
+| NF-1 | System handles at least 1,000 concurrent purchase attempts without errors, data loss, or overselling.   |
 | NF-2 | Under a stress test of 1,000 concurrent purchase attempts, median response time remains under 1 second. |
-| NF-3 | Architectural bottlenecks are identified and addressed in documentation. |
+| NF-3 | Architectural bottlenecks are identified and addressed in documentation.                                |
 
 > **Rationale for thresholds:**
+>
 > - **1,000 concurrent requests** — the source requirement describes "thousands of users" attempting simultaneous purchases. 1,000 is a reasonable lower bound that demonstrates the system can handle the thundering-herd pattern while remaining feasible to run in a local test environment.
 > - **1 second median response time** — derived from standard web UX expectations where users perceive delays above 1 second as sluggish. For a "Buy Now" action where users are racing against stock depletion, sub-second feedback is critical to a reliable user experience.
 
@@ -228,11 +229,11 @@ The frontend is a single-page application that displays the current sale status 
 
 #### 2.2.2 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
+| ID   | Criterion                                                                                            |
+| ---- | ---------------------------------------------------------------------------------------------------- |
 | NF-4 | After a simulated crash and restart, the system state (stock count, purchase records) is consistent. |
-| NF-5 | Under load exceeding capacity, the system rejects excess requests cleanly without data corruption. |
-| NF-6 | No partial purchases exist (stock decremented without user record, or vice versa). |
+| NF-5 | Under load exceeding capacity, the system rejects excess requests cleanly without data corruption.   |
+| NF-6 | No partial purchases exist (stock decremented without user record, or vice versa).                   |
 
 ---
 
@@ -246,11 +247,11 @@ The frontend is a single-page application that displays the current sale status 
 
 #### 2.3.2 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
+| ID   | Criterion                                                                     |
+| ---- | ----------------------------------------------------------------------------- |
 | NF-7 | Under concurrent load, total confirmed purchases never exceeds initial stock. |
-| NF-8 | Under concurrent load, no user has more than one confirmed purchase. |
-| NF-9 | The stock check + user check + decrement + record operation is atomic. |
+| NF-8 | Under concurrent load, no user has more than one confirmed purchase.          |
+| NF-9 | The stock check + user check + decrement + record operation is atomic.        |
 
 ---
 
@@ -276,11 +277,11 @@ The frontend is a single-page application that displays the current sale status 
 
 #### 2.4.4 Acceptance Criteria
 
-| ID | Criterion |
-|---|---|
+| ID    | Criterion                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------ |
 | NF-10 | Architecture documentation includes a rate-limiting strategy specifying placement and algorithm. |
-| NF-11 | Architecture documentation addresses DDoS/thundering-herd mitigation at the design level. |
-| NF-12 | Architecture documentation identifies CDN placement for static assets and cacheable endpoints. |
+| NF-11 | Architecture documentation addresses DDoS/thundering-herd mitigation at the design level.        |
+| NF-12 | Architecture documentation identifies CDN placement for static assets and cacheable endpoints.   |
 
 > Note: These are **design-level requirements** — the architecture must account for them, but production-grade implementation (WAF, cloud CDN, distributed rate limiters) is not required for the local deliverable.
 
@@ -295,11 +296,11 @@ The frontend is a single-page application that displays the current sale status 
 
 **Success Criteria:**
 
-| ID | Criterion |
-|---|---|
+| ID  | Criterion                                                                  |
+| --- | -------------------------------------------------------------------------- |
 | T-1 | Unit tests cover all sale state transitions including boundary conditions. |
-| T-2 | Unit tests verify stock cannot go below 0 and overselling is impossible. |
-| T-3 | Unit tests verify per-user purchase limit enforcement. |
+| T-2 | Unit tests verify stock cannot go below 0 and overselling is impossible.   |
+| T-3 | Unit tests verify per-user purchase limit enforcement.                     |
 
 ### 3.2 Integration Tests
 
@@ -309,11 +310,11 @@ The frontend is a single-page application that displays the current sale status 
 
 **Success Criteria:**
 
-| ID | Criterion |
-|---|---|
+| ID  | Criterion                                                                    |
+| --- | ---------------------------------------------------------------------------- |
 | T-4 | Integration tests exercise every API endpoint with valid and invalid inputs. |
-| T-5 | Integration tests verify the full sale lifecycle through the API. |
-| T-6 | Integration tests verify distinct response types for each rejection reason. |
+| T-5 | Integration tests verify the full sale lifecycle through the API.            |
+| T-6 | Integration tests verify distinct response types for each rejection reason.  |
 
 ### 3.3 Stress Tests
 
@@ -323,14 +324,15 @@ The frontend is a single-page application that displays the current sale status 
 
 **Success Criteria:**
 
-| ID | Criterion |
-|---|---|
-| T-7 | Stress test simulates at least 1,000 concurrent purchase attempts against a stock of fewer units (e.g., 100 stock, 1,000 users). |
-| T-8 | After stress test completion, total confirmed purchases equals min(stock, unique users) with zero overselling. |
-| T-9 | After stress test completion, no user has more than one confirmed purchase. |
+| ID   | Criterion                                                                                                                               |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| T-7  | Stress test simulates at least 1,000 concurrent purchase attempts against a stock of fewer units (e.g., 100 stock, 1,000 users).        |
+| T-8  | After stress test completion, total confirmed purchases equals min(stock, unique users) with zero overselling.                          |
+| T-9  | After stress test completion, no user has more than one confirmed purchase.                                                             |
 | T-10 | Stress test results are logged and include: total attempts, successful purchases, rejected attempts (by reason), and final stock count. |
 
 > **Rationale for thresholds:**
+>
 > - **1,000 concurrent users** — matches NF-1 and represents the "thousands of users" scenario from the source requirement at a scale that is reproducible locally.
 > - **100 stock (10:1 user-to-stock ratio)** — ensures most requests are rejected, which maximises contention on the final units and exposes race conditions in both stock decrement and per-user deduplication. A 1:1 ratio would let nearly everyone succeed and would not stress concurrency controls.
 
@@ -340,51 +342,52 @@ The frontend is a single-page application that displays the current sale status 
 
 ### 4.1 Assumptions
 
-| # | Assumption | Rationale |
-|---|---|---|
-| A-1 | No real authentication is required. User identity is a self-reported string. | The assessment focuses on concurrency and throughput, not auth infrastructure. |
-| A-2 | No real payment processing occurs. A "confirmed purchase" means the system accepted the attempt. | Payment integration is out of scope per the assessment. |
-| A-3 | A single server instance is sufficient for the initial implementation. | The assessment allows local infrastructure. Horizontal scaling is designed for but not deployed. |
-| A-4 | Cloud services (Redis, message queues) may be simulated locally or in-memory. | The assessment permits local Docker or in-memory simulation as long as choices are documented. |
-| A-5 | Server clock is the single source of truth for sale timing. | Client clocks are untrusted. Distributed clock sync is out of scope. |
-| A-6 | The flash sale is configured once before it starts and is not modified during or after. | No admin UI or runtime reconfiguration is required. |
+| #   | Assumption                                                                                       | Rationale                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| A-1 | No real authentication is required. User identity is a self-reported string.                     | The assessment focuses on concurrency and throughput, not auth infrastructure.                   |
+| A-2 | No real payment processing occurs. A "confirmed purchase" means the system accepted the attempt. | Payment integration is out of scope per the assessment.                                          |
+| A-3 | A single server instance is sufficient for the initial implementation.                           | The assessment allows local infrastructure. Horizontal scaling is designed for but not deployed. |
+| A-4 | Cloud services (Redis, message queues) may be simulated locally or in-memory.                    | The assessment permits local Docker or in-memory simulation as long as choices are documented.   |
+| A-5 | Server clock is the single source of truth for sale timing.                                      | Client clocks are untrusted. Distributed clock sync is out of scope.                             |
+| A-6 | The flash sale is configured once before it starts and is not modified during or after.          | No admin UI or runtime reconfiguration is required.                                              |
 
 ### 4.2 Decisions
 
-| # | Decision | Rationale |
-|---|---|---|
-| D-1 | Language: TypeScript for both backend and frontend. | Required by assessment guidelines. Provides type safety across the stack. |
+| #   | Decision                                                                          | Rationale                                                                 |
+| --- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| D-1 | Language: TypeScript for both backend and frontend.                               | Required by assessment guidelines. Provides type safety across the stack. |
 | D-2 | Backend framework: To be selected from Express, Fastify, Nest.js, or native http. | Per assessment constraints. Choice to be documented in architecture docs. |
-| D-3 | Frontend framework: React. | Required by assessment guidelines. |
-| D-4 | All concurrency-critical operations use atomic operations or transactions. | Non-negotiable for correctness under load. |
+| D-3 | Frontend framework: React.                                                        | Required by assessment guidelines.                                        |
+| D-4 | All concurrency-critical operations use atomic operations or transactions.        | Non-negotiable for correctness under load.                                |
 
 ### 4.3 Back-of-the-Envelope Estimation
 
 The following estimates ground the performance thresholds from Sections 2 and 3 in concrete capacity math. All figures assume the stress-test scenario: **100 stock, 1,000–10,000 users, sale duration of a few minutes**.
 
-| Dimension | Estimate | Notes |
-|---|---|---|
-| **Traffic** | | |
-| Connected users | 1,000–10,000 | Source requirement: "thousands of users" simultaneously |
-| Peak purchase QPS | ~2,000 req/s | 10,000 users firing within a 5 s window |
-| Status polling QPS | ~10,000 req/s | 1 poll/s per connected client (read-only, no writes) |
-| Status polling QPS (with CDN) | ~100 req/s to origin | Edge cache absorbs 99% of status polls at 1–2 s TTL |
-| **Storage** | | |
-| Per-purchase record | ~200 B | User ID string + timestamp + status |
-| All purchase records | ~20 KB | 100 confirmed purchases × 200 B |
-| User dedup set | ~500 KB | 10,000 user IDs × ~50 B avg |
-| Total persistent data | < 1 MB | Fits entirely in memory; disk persistence is optional |
-| **Memory** | | |
-| Stock counter | 8 B | Single atomic integer |
-| User-purchased set | ~500 KB | Hash set of 10,000 entries |
-| Business state total | < 1 MB | Negligible relative to runtime overhead |
-| Connection overhead | ~100 MB | 10,000 concurrent connections × ~10 KB each |
-| **Bandwidth** | | |
-| Per-purchase round trip | ~500 B | ~200 B request + ~300 B response |
-| Purchase peak throughput | ~1 MB/s | 2,000 req/s × 500 B |
-| Status polling throughput | ~5 MB/s | 10,000 clients × ~500 B response at 1 req/s |
+| Dimension                     | Estimate             | Notes                                                   |
+| ----------------------------- | -------------------- | ------------------------------------------------------- |
+| **Traffic**                   |                      |                                                         |
+| Connected users               | 1,000–10,000         | Source requirement: "thousands of users" simultaneously |
+| Peak purchase QPS             | ~2,000 req/s         | 10,000 users firing within a 5 s window                 |
+| Status polling QPS            | ~10,000 req/s        | 1 poll/s per connected client (read-only, no writes)    |
+| Status polling QPS (with CDN) | ~100 req/s to origin | Edge cache absorbs 99% of status polls at 1–2 s TTL     |
+| **Storage**                   |                      |                                                         |
+| Per-purchase record           | ~200 B               | User ID string + timestamp + status                     |
+| All purchase records          | ~20 KB               | 100 confirmed purchases × 200 B                         |
+| User dedup set                | ~500 KB              | 10,000 user IDs × ~50 B avg                             |
+| Total persistent data         | < 1 MB               | Fits entirely in memory; disk persistence is optional   |
+| **Memory**                    |                      |                                                         |
+| Stock counter                 | 8 B                  | Single atomic integer                                   |
+| User-purchased set            | ~500 KB              | Hash set of 10,000 entries                              |
+| Business state total          | < 1 MB               | Negligible relative to runtime overhead                 |
+| Connection overhead           | ~100 MB              | 10,000 concurrent connections × ~10 KB each             |
+| **Bandwidth**                 |                      |                                                         |
+| Per-purchase round trip       | ~500 B               | ~200 B request + ~300 B response                        |
+| Purchase peak throughput      | ~1 MB/s              | 2,000 req/s × 500 B                                     |
+| Status polling throughput     | ~5 MB/s              | 10,000 clients × ~500 B response at 1 req/s             |
 
 > **Key Takeaway**
+>
 > - The system is **compute/concurrency-bound**, not storage or bandwidth-bound. All business state fits in < 1 MB of memory, and peak bandwidth is well under 10 MB/s.
 > - The bottleneck is **atomic operations on shared state** (stock counter + user-purchased set), not I/O or storage.
 > - This confirms the architecture should prioritise **lock contention and atomic-operation throughput** over storage capacity or network optimisation.
@@ -395,16 +398,16 @@ The following estimates ground the performance thresholds from Sections 2 and 3 
 
 The following are explicitly excluded from this project:
 
-| Item | Reason |
-|---|---|
-| Payment processing | No real payment gateway integration required. |
-| User authentication and registration | Identity is a self-reported string; no login system. |
-| Multi-product catalog | Single product only per assessment constraints. |
-| Order history and management | No post-purchase order tracking beyond purchase verification. |
-| Email or push notifications | No notification system for purchase confirmations or sale reminders. |
-| Live cloud deployment | System runs locally; cloud architecture is designed but not deployed. |
-| Admin interface | No runtime configuration UI; sale parameters are set before startup. |
-| Cart or wishlist functionality | Single "Buy Now" action; no shopping cart. |
-| Production-grade DDoS infrastructure (WAF, cloud-based scrubbing) | Design is documented; deployment of dedicated DDoS appliances is out of scope. |
-| CDN deployment | Architecture specifies CDN placement; actual CDN provisioning is out of scope for local delivery. |
-| Internationalization or localization | Single-locale interface. |
+| Item                                                              | Reason                                                                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Payment processing                                                | No real payment gateway integration required.                                                     |
+| User authentication and registration                              | Identity is a self-reported string; no login system.                                              |
+| Multi-product catalog                                             | Single product only per assessment constraints.                                                   |
+| Order history and management                                      | No post-purchase order tracking beyond purchase verification.                                     |
+| Email or push notifications                                       | No notification system for purchase confirmations or sale reminders.                              |
+| Live cloud deployment                                             | System runs locally; cloud architecture is designed but not deployed.                             |
+| Admin interface                                                   | No runtime configuration UI; sale parameters are set before startup.                              |
+| Cart or wishlist functionality                                    | Single "Buy Now" action; no shopping cart.                                                        |
+| Production-grade DDoS infrastructure (WAF, cloud-based scrubbing) | Design is documented; deployment of dedicated DDoS appliances is out of scope.                    |
+| CDN deployment                                                    | Architecture specifies CDN placement; actual CDN provisioning is out of scope for local delivery. |
+| Internationalization or localization                              | Single-locale interface.                                                                          |
