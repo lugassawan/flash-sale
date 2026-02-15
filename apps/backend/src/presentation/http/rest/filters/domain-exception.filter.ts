@@ -82,7 +82,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       // Normalize other responses to prevent leaking internal structure
       const message =
-        typeof response === 'string' ? response : ((response as any)?.message ?? exception.message);
+        typeof response === 'string'
+          ? response
+          : ((response as Record<string, unknown>)?.message ?? exception.message);
       reply.status(status).send({
         success: false,
         error: {
