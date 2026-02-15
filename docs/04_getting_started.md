@@ -279,16 +279,16 @@ curl -X POST http://localhost/api/v1/products \
 sleep 1
 
 # 3. Check sale status
-curl http://localhost/api/v1/sales
+curl "http://localhost/api/v1/sales?sku=SMOKE-TEST"
 
 # 4. Make a purchase
 curl -X POST http://localhost/api/v1/purchases \
   -H "Content-Type: application/json" \
   -H "X-User-Id: smoke-test-user" \
-  -d '{"sku": "SMOKE-TEST", "qty": 1}'
+  -d '{"sku": "SMOKE-TEST"}'
 
 # 5. Verify purchase
-curl -H "X-User-Id: smoke-test-user" http://localhost/api/v1/purchases
+curl -H "X-User-Id: smoke-test-user" "http://localhost/api/v1/purchases?sku=SMOKE-TEST"
 ```
 
 ---
@@ -334,7 +334,7 @@ Use Docker secrets, Kubernetes secrets, or a vault service (HashiCorp Vault, AWS
 
 **API responses**:
 
-- Sale status endpoint (`GET /api/v1/sales`): CDN-cacheable with `Cache-Control: public, max-age=1`
+- Sale status endpoint (`GET /api/v1/sales?sku=`): CDN-cacheable with `Cache-Control: public, max-age=1`
 - Purchase endpoint (`POST /api/v1/purchases`): Not cached
 - SSE endpoint (`GET /api/v1/sales/events`): Streaming, not cacheable
 
@@ -346,7 +346,7 @@ Use Docker secrets, Kubernetes secrets, or a vault service (HashiCorp Vault, AWS
 
 ### 3.4 Monitoring
 
-The backend exposes Prometheus metrics at the default metrics endpoint:
+The backend exposes Prometheus metrics at `GET /metrics`:
 
 - **Request rate**: HTTP requests per second by method, path, and status
 - **Error rate**: 4xx and 5xx responses

@@ -99,13 +99,16 @@ Open `http://localhost:5173` to see the frontend. See the [Getting Started guide
 
 ### Public Endpoints
 
-| Method | Endpoint               | Description                                       |
-| ------ | ---------------------- | ------------------------------------------------- |
-| `GET`  | `/api/v1/sales`        | Sale status + stock count (CDN-cacheable, 1s TTL) |
-| `POST` | `/api/v1/purchases`    | Attempt purchase (atomic via Lua script)          |
-| `GET`  | `/api/v1/purchases`    | Check user's purchase status                      |
-| `GET`  | `/api/v1/sales/events` | SSE stream for real-time updates                  |
-| `GET`  | `/health`              | Health check (Redis + PostgreSQL status)          |
+| Method | Endpoint                    | Description                                       |
+| ------ | --------------------------- | ------------------------------------------------- |
+| `GET`  | `/api/v1/sales?sku=`        | Sale status + stock count (CDN-cacheable, 1s TTL) |
+| `POST` | `/api/v1/purchases`         | Attempt purchase (atomic via Lua script)          |
+| `GET`  | `/api/v1/purchases?sku=`    | Check user's purchase status                      |
+| `GET`  | `/api/v1/sales/events?sku=` | SSE stream for real-time updates                  |
+| `GET`  | `/health`                   | Health check (Redis + PostgreSQL status)          |
+| `GET`  | `/metrics`                  | Prometheus metrics                                |
+
+Purchase and purchase-status endpoints require `X-User-Id` header. See [System Design](docs/02_system_design.md#2-api-contract) for the full API contract.
 
 ### Admin Endpoints
 
@@ -116,7 +119,7 @@ Open `http://localhost:5173` to see the frontend. See the [Getting Started guide
 | `PUT`    | `/api/v1/products/:sku` | Update product (only when UPCOMING)    |
 | `DELETE` | `/api/v1/products/:sku` | Delete product + sale data             |
 
-All admin endpoints require `X-Admin-Key` header. See [System Design](docs/02_system_design.md#2-api-contract) for the full API contract.
+All admin endpoints require `X-Admin-Key` header.
 
 ---
 
