@@ -1,0 +1,15 @@
+# Default owners for the entire repository
+* @lugassawan
+
+# Backend
+apps/backend/ @lugassawan
+
+# Frontend
+apps/frontend/ @lugassawan
+
+# Shared packages
+packages/ @lugassawan
+
+# Infrastructure & CI/CD
+infrastructure/ @lugassawan
+.github/ @lugassawan
