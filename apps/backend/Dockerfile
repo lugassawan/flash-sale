@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 RUN corepack enable pnpm
 WORKDIR /app
 
@@ -35,7 +35,7 @@ COPY apps/backend/package.json ./apps/backend/
 RUN pnpm install --frozen-lockfile --prod
 
 # ── Stage 4: Production image ────────────────────────────────────────────────
-FROM node:20-alpine
+FROM node:22-alpine
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 WORKDIR /app
