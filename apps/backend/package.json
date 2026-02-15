@@ -20,6 +20,7 @@
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.13",
     "@nestjs/platform-fastify": "^11.1.13",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/typeorm": "^11.0.0",
     "bullmq": "^5.69.2",
     "class-transformer": "^0.5.1",
