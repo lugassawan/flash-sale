@@ -10,9 +10,10 @@ import { getProductDetails } from './setup-sale.js';
  * @param {string} adminKey
  * @param {string} sku
  * @param {number} initialStock
+ * @param {number} [expectedUniqueUsers] — if provided, verify purchases don't exceed this
  * @returns {{ passed: boolean, violations: string[], summary: Object }}
  */
-export function verifyInvariants(baseUrl, adminKey, sku, initialStock) {
+export function verifyInvariants(baseUrl, adminKey, sku, initialStock, expectedUniqueUsers) {
   const violations = [];
 
   // Fetch final state from admin API (source of truth)
@@ -40,6 +41,13 @@ export function verifyInvariants(baseUrl, adminKey, sku, initialStock) {
   if (product.totalPurchases + product.currentStock !== initialStock) {
     violations.push(
       `STOCK_MISMATCH: totalPurchases (${product.totalPurchases}) + currentStock (${product.currentStock}) != initialStock (${initialStock})`,
+    );
+  }
+
+  // Invariant 4 (optional): Purchases must not exceed expected unique users
+  if (expectedUniqueUsers !== undefined && product.totalPurchases > expectedUniqueUsers) {
+    violations.push(
+      `DEDUP_VIOLATION: totalPurchases (${product.totalPurchases}) > expectedUniqueUsers (${expectedUniqueUsers})`,
     );
   }
 
