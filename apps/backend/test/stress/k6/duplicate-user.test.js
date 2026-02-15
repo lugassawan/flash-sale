@@ -10,9 +10,10 @@ import { verifyInvariants, formatReport } from './helpers/verify-results.js';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const ADMIN_KEY = __ENV.ADMIN_API_KEY || 'dev-admin-key-12345678';
-const SKU = __ENV.TEST_SKU || 'STRESS-LOAD-TEST';
+const SKU = __ENV.TEST_SKU || 'STRESS-DEDUP-TEST';
 const INITIAL_STOCK = parseInt(__ENV.INITIAL_STOCK || '100', 10);
 const VUS = parseInt(__ENV.VUS || '1000', 10);
+const DEDUP_USERS = parseInt(__ENV.DEDUP_USERS || '10', 10);
 
 // ---------------------------------------------------------------------------
 // Custom metrics
@@ -22,16 +23,23 @@ const purchaseSuccess = new Counter('purchase_success');
 const purchaseSoldOut = new Counter('purchase_rejected_sold_out');
 const purchaseAlreadyPurchased = new Counter('purchase_rejected_already_purchased');
 const purchaseNotActive = new Counter('purchase_rejected_not_active');
+const purchaseRateLimited = new Counter('purchase_rate_limited');
 const purchaseError = new Counter('purchase_error');
 const httpErrors = new Counter('http_errors');
 
 // ---------------------------------------------------------------------------
 // k6 options
+//
+// This test intentionally triggers rate limiting: each of DEDUP_USERS unique
+// users sends VUS/DEDUP_USERS concurrent requests. The rate limiter (1 req/s
+// per user) blocks most attempts before the Lua-script dedup layer. Both are
+// valid rejection paths — the key invariant is that exactly DEDUP_USERS
+// purchases succeed.
 // ---------------------------------------------------------------------------
 
 export const options = {
   scenarios: {
-    purchase_burst: {
+    duplicate_burst: {
       executor: 'per-vu-iterations',
       vus: VUS,
       iterations: 1,
@@ -40,9 +48,7 @@ export const options = {
   },
   thresholds: {
     http_req_duration: ['p(50)<500', 'p(95)<1000', 'p(99)<2000'],
-    http_req_failed: ['rate<0.001'],
-    purchase_success: [`count==${INITIAL_STOCK}`],
-    purchase_rejected_already_purchased: ['count==0'],
+    purchase_success: [`count==${DEDUP_USERS}`],
     purchase_error: ['count==0'],
     http_errors: ['count==0'],
   },
@@ -53,17 +59,19 @@ export const options = {
 // ---------------------------------------------------------------------------
 
 export function setup() {
-  console.log(`\n[setup] Creating sale: SKU=${SKU}, stock=${INITIAL_STOCK}`);
-  console.log(`[setup] Target: ${BASE_URL}`);
-  console.log(`[setup] VUs: ${VUS}\n`);
+  console.log(`\n[setup] Duplicate-user deduplication test`);
+  console.log(`[setup] SKU=${SKU}, stock=${INITIAL_STOCK}`);
+  console.log(`[setup] VUs: ${VUS}, unique users: ${DEDUP_USERS}`);
+  console.log(`[setup] Target: ${BASE_URL}\n`);
 
   // Clean up any leftover sale from a previous run
   deleteSale(BASE_URL, ADMIN_KEY, SKU);
 
-  // Create a new sale with start time in the past so it transitions to ACTIVE
+  // Create a new sale — stock is intentionally larger than unique users
+  // so stock is NOT the bottleneck; only dedup logic limits purchases
   createSale(BASE_URL, ADMIN_KEY, {
     sku: SKU,
-    productName: 'Stress Test Product',
+    productName: 'Dedup Stress Test Product',
     initialStock: INITIAL_STOCK,
   });
 
@@ -76,39 +84,56 @@ export function setup() {
     adminKey: ADMIN_KEY,
     sku: SKU,
     initialStock: INITIAL_STOCK,
+    dedupUsers: DEDUP_USERS,
     vus: VUS,
   };
 }
 
 // ---------------------------------------------------------------------------
-// Test — each VU executes once with a unique user ID
+// Test — multiple VUs share user IDs to stress-test deduplication
 // ---------------------------------------------------------------------------
 
 export default function (data) {
-  const userId = `stress-user-${String(__VU).padStart(5, '0')}`;
+  // Map VU number to one of DEDUP_USERS unique user IDs
+  // VU 1-100 → user 1-10, VU 101-200 → user 1-10, etc.
+  const userIndex = ((__VU - 1) % data.dedupUsers) + 1;
+  const userId = `dedup-user-${String(userIndex).padStart(3, '0')}`;
 
   const res = http.post(`${data.baseUrl}/api/v1/purchases`, JSON.stringify({ sku: data.sku }), {
     headers: {
       'Content-Type': 'application/json',
       'X-User-Id': userId,
     },
-    tags: { name: 'purchase' },
+    tags: { name: 'dedup_purchase' },
   });
 
-  // Track HTTP-level errors
-  const statusOk = check(res, {
-    'status is 200': (r) => r.status === 200,
-  });
-
-  if (!statusOk) {
+  // Track server errors (5xx) as true HTTP errors
+  if (res.status >= 500) {
     httpErrors.add(1);
     purchaseError.add(1);
     return;
   }
 
-  // Parse response and categorise outcome
+  // Parse response body — both 200 and 429 return JSON with error codes
   const body = res.json();
 
+  // Rate-limited by the per-user sliding window (429)
+  if (res.status === 429) {
+    purchaseRateLimited.add(1);
+    check(body, {
+      'rate limit has code': (b) => b.error && b.error.code === 'RATE_LIMIT_EXCEEDED',
+    });
+    return;
+  }
+
+  // Non-200, non-429, non-5xx — unexpected status
+  if (res.status !== 200) {
+    purchaseError.add(1);
+    console.warn(`[vu=${__VU}] Unexpected status: ${res.status} — ${res.body}`);
+    return;
+  }
+
+  // 200 OK — either a successful purchase or a business logic rejection
   if (body.success === true) {
     purchaseSuccess.add(1);
     check(body, {
@@ -140,9 +165,15 @@ export default function (data) {
 // ---------------------------------------------------------------------------
 
 export function teardown(data) {
-  console.log('\n[teardown] Verifying invariants via admin API...\n');
+  console.log('\n[teardown] Verifying dedup invariants via admin API...\n');
 
-  const result = verifyInvariants(data.baseUrl, data.adminKey, data.sku, data.initialStock);
+  const result = verifyInvariants(
+    data.baseUrl,
+    data.adminKey,
+    data.sku,
+    data.initialStock,
+    data.dedupUsers,
+  );
 
   console.log(formatReport(result));
 
@@ -152,6 +183,7 @@ export function teardown(data) {
 
   console.log(`[teardown] Final stock: ${result.summary.currentStock}`);
   console.log(`[teardown] Total purchases (DB): ${result.summary.totalPurchases}`);
+  console.log(`[teardown] Expected unique users: ${data.dedupUsers}`);
 
   // NOTE: Do not delete sale here — verify-invariants.sh needs Redis + PG data
   // intact for its independent checks. Cleanup happens at the start of the next

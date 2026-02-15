@@ -40,7 +40,7 @@ export const options = {
     },
   },
   thresholds: {
-    http_req_duration: ['p(50)<500', 'p(95)<1000', 'p(99)<2000'],
+    http_req_duration: ['p(50)<200', 'p(95)<500', 'p(99)<1000'],
     http_req_failed: ['rate<0.001'],
     poll_error_rate: ['rate<0.001'],
     checks: ['rate>0.99'],

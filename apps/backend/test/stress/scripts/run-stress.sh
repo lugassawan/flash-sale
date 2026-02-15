@@ -14,6 +14,8 @@
 #   INITIAL_STOCK  — Stock for purchase test (default: 100)
 #   VUS            — Virtual users           (default: 1000)
 #   K6_CMD         — k6 binary path          (default: auto-detect)
+#   DEDUP_USERS    — Unique users for dedup  (default: 10)
+#   DRAIN_WAIT     — Seconds to wait for async persistence before verification (default: 15)
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
@@ -64,6 +66,7 @@ run_k6() {
   [[ -n "${TEST_SKU:-}" ]]      && env_args+=("-e" "TEST_SKU=${TEST_SKU}")
   [[ -n "${PURCHASE_VUS:-}" ]]  && env_args+=("-e" "PURCHASE_VUS=${PURCHASE_VUS}")
   [[ -n "${POLL_VUS:-}" ]]      && env_args+=("-e" "POLL_VUS=${POLL_VUS}")
+  [[ -n "${DEDUP_USERS:-}" ]]   && env_args+=("-e" "DEDUP_USERS=${DEDUP_USERS}")
 
   if [[ "${k6_bin}" == "docker" ]]; then
     log "Running k6 via Docker..."
@@ -148,9 +151,16 @@ main() {
       run_k6 "mixed-workload.test.js" || exit_code=$((exit_code | $?))
       has_purchases=true
       ;;
+    duplicate-user)
+      run_k6 "duplicate-user.test.js" || exit_code=$((exit_code | $?))
+      has_purchases=true
+      ;;
     all)
       log "--- Running purchase-load test ---"
       run_k6 "purchase-load.test.js" || exit_code=$((exit_code | $?))
+
+      log "--- Running duplicate-user test ---"
+      run_k6 "duplicate-user.test.js" || exit_code=$((exit_code | $?))
 
       log "--- Running status-polling test ---"
       run_k6 "status-polling.test.js" || exit_code=$((exit_code | $?))
@@ -161,13 +171,16 @@ main() {
       has_purchases=true
       ;;
     *)
-      fail "Unknown test: ${TEST}. Valid: purchase-load, status-polling, mixed-workload, all"
+      fail "Unknown test: ${TEST}. Valid: purchase-load, duplicate-user, status-polling, mixed-workload, all"
       ;;
   esac
 
   # Run invariant verification only for tests that make purchases
   if ${has_purchases}; then
+    local drain_wait="${DRAIN_WAIT:-15}"
     log ""
+    log "--- Waiting ${drain_wait}s for async persistence to complete ---"
+    sleep "${drain_wait}"
     log "--- Running post-test invariant checks ---"
     bash "${SCRIPT_DIR}/verify-invariants.sh" || exit_code=$((exit_code | $?))
   fi
