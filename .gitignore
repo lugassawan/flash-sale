@@ -30,6 +30,9 @@ lerna-debug.log*
 !infrastructure/docker/.env.development
 !infrastructure/docker/.env.test
 
+# Always track example env files
+!**/.env.example
+
 # Coverage
 coverage/
 .nyc_output/
