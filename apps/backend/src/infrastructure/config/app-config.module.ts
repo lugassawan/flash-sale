@@ -4,7 +4,7 @@ import { validateEnv } from './env.validation';
 
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot({ validate: () => validateEnv(), isGlobal: true })],
+  imports: [ConfigModule.forRoot({ validate: validateEnv, isGlobal: true })],
   exports: [ConfigModule],
 })
 export class AppConfigModule {}
