@@ -23,11 +23,18 @@ const purchaseSuccess = new Counter('purchase_success');
 const purchaseSoldOut = new Counter('purchase_rejected_sold_out');
 const purchaseAlreadyPurchased = new Counter('purchase_rejected_already_purchased');
 const purchaseNotActive = new Counter('purchase_rejected_not_active');
+const purchaseRateLimited = new Counter('purchase_rate_limited');
 const purchaseError = new Counter('purchase_error');
 const httpErrors = new Counter('http_errors');
 
 // ---------------------------------------------------------------------------
 // k6 options
+//
+// This test intentionally triggers rate limiting: each of DEDUP_USERS unique
+// users sends VUS/DEDUP_USERS concurrent requests. The rate limiter (1 req/s
+// per user) blocks most attempts before the Lua-script dedup layer. Both are
+// valid rejection paths — the key invariant is that exactly DEDUP_USERS
+// purchases succeed.
 // ---------------------------------------------------------------------------
 
 export const options = {
@@ -41,9 +48,7 @@ export const options = {
   },
   thresholds: {
     http_req_duration: ['p(50)<500', 'p(95)<1000', 'p(99)<2000'],
-    http_req_failed: ['rate<0.001'],
     purchase_success: [`count==${DEDUP_USERS}`],
-    purchase_rejected_already_purchased: [`count>=${VUS - DEDUP_USERS}`],
     purchase_error: ['count==0'],
     http_errors: ['count==0'],
   },
@@ -102,20 +107,33 @@ export default function (data) {
     tags: { name: 'dedup_purchase' },
   });
 
-  // Track HTTP-level errors
-  const statusOk = check(res, {
-    'status is 200': (r) => r.status === 200,
-  });
-
-  if (!statusOk) {
+  // Track server errors (5xx) as true HTTP errors
+  if (res.status >= 500) {
     httpErrors.add(1);
     purchaseError.add(1);
     return;
   }
 
-  // Parse response and categorise outcome
+  // Parse response body — both 200 and 429 return JSON with error codes
   const body = res.json();
 
+  // Rate-limited by the per-user sliding window (429)
+  if (res.status === 429) {
+    purchaseRateLimited.add(1);
+    check(body, {
+      'rate limit has code': (b) => b.error && b.error.code === 'RATE_LIMIT_EXCEEDED',
+    });
+    return;
+  }
+
+  // Non-200, non-429, non-5xx — unexpected status
+  if (res.status !== 200) {
+    purchaseError.add(1);
+    console.warn(`[vu=${__VU}] Unexpected status: ${res.status} — ${res.body}`);
+    return;
+  }
+
+  // 200 OK — either a successful purchase or a business logic rejection
   if (body.success === true) {
     purchaseSuccess.add(1);
     check(body, {
